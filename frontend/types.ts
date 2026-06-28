@@ -116,10 +116,22 @@ export interface StateLog {
   phase: SystemState['currentPhase'];
 }
 
+export type TimelineActor = 'CONDUCTOR' | 'RUNNER' | 'REVIEWER' | 'SYSTEM';
+export type TimelineStatus = 'testing' | 'success' | 'warning' | 'error' | 'info';
+
+export interface TimelineEvent {
+  id: string;
+  actor: TimelineActor;
+  status: TimelineStatus;
+  message: string;
+  timestamp: string;
+  step?: string;
+}
+
 export interface WebviewMessage {
   type: 'AGENT_STATE_UPDATE';
   payload: {
     state: SystemState;
-    log?: StateLog;
+    log?: TimelineEvent;
   };
 }

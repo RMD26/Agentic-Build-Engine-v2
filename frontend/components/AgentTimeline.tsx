@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { BrainCircuit, Code2, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
-import { StateLog } from '../types';
+import { BrainCircuit, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { TimelineEvent } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
 
 interface AgentTimelineProps {
-  logs: StateLog[];
+  logs: TimelineEvent[];
 }
 
 export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
@@ -16,24 +16,22 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
     }
   }, [logs]);
 
-  const getAgentIcon = (agent: string) => {
-    switch (agent) {
+  const getActorIcon = (actor: string) => {
+    switch (actor) {
       case 'CONDUCTOR': return <BrainCircuit size={16} className="text-purple-400" />;
-      case 'CODER': return <Code2 size={16} className="text-blue-400" />;
       case 'REVIEWER': return <ShieldCheck size={16} className="text-emerald-400" />;
       case 'RUNNER': return <TerminalSquare size={16} className="text-amber-400" />;
       default: return <Settings size={16} className="text-gray-400" />;
     }
   };
 
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case 'ANALYSIS': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'CODING': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'REVIEW': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'TESTING': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'SUCCESS': return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case 'FAILURE': return 'bg-red-500/10 text-red-400 border-red-500/20';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'info': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'testing': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'success': return 'bg-green-500/10 text-green-400 border-green-500/20';
+      case 'warning': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      case 'error': return 'bg-red-500/10 text-red-400 border-red-500/20';
       default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
     }
   };
@@ -58,11 +56,11 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
             ) : (
               logs.map((log, index) => {
                 const isLast = index === logs.length - 1;
-                const isSuccess = log.phase === 'SUCCESS';
-                const isFailure = log.phase === 'FAILURE';
+                const isSuccess = log.status === 'success';
+                const isFailure = log.status === 'error';
 
                 return (
-                  <div key={index} className="flex gap-4 relative group">
+                  <div key={log.id} className="flex gap-4 relative group">
                     {/* Timeline Node */}
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-background z-10 transition-colors duration-300 mt-1 ${
                       isSuccess ? 'border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]' :
@@ -71,16 +69,16 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
                     }`}>
                       {isSuccess ? <CheckCircle2 size={20} className="text-green-500" /> :
                        isFailure ? <XCircle size={20} className="text-red-500" /> :
-                       getAgentIcon(log.agent)}
+                       getActorIcon(log.actor)}
                     </div>
 
                     {/* Content Card using the new CollapsiblePanel */}
                     <div className="flex-1">
                       <CollapsiblePanel
-                        title={log.agent}
-                        subtitle={new Date(log.timestamp).toISOString().split('T')[1].slice(0, -1)}
-                        badgeText={log.phase}
-                        badgeColorClass={getPhaseColor(log.phase)}
+                        title={log.actor}
+                        subtitle={log.timestamp.split('T')[1]?.slice(0, -1) ?? log.timestamp}
+                        badgeText={log.step ?? log.status}
+                        badgeColorClass={getStatusColor(log.status)}
                         defaultExpanded={isLast || isFailure || isSuccess}
                       >
                         <p className={`text-sm leading-relaxed ${isFailure ? 'text-red-400' : 'text-slate-300'}`}>
