@@ -64,16 +64,14 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
    : defaultExpanded
  );
 
- const innerRef = useRef<HTMLDivElement>(null);
- const [maxHeight, setMaxHeight] = useState<number>(0);
+ // Guard against firing onToggle on initial mount
+ const isMounted = useRef(false);
 
  useEffect(() => {
-  if (innerRef.current) {
-   setMaxHeight(innerRef.current.scrollHeight);
+  if (!isMounted.current) {
+   isMounted.current = true;
+   return;
   }
- }, [children, isExpanded]);
-
- useEffect(() => {
   if (persistKey) safeWritePersistedState(persistKey, isExpanded);
   onToggle?.(isExpanded);
  }, [isExpanded, persistKey, onToggle]);
@@ -99,6 +97,7 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
      disabled={disabled}
      aria-expanded={isExpanded}
      aria-controls={contentId}
+     aria-disabled={disabled}
      className={cn(
       'group flex min-h-[52px] flex-1 items-center justify-between gap-3 px-3 py-3 text-left',
       'bg-slate-900/50 transition-colors duration-200',
@@ -149,7 +148,7 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
      <div className="ml-2 flex flex-shrink-0 items-center gap-2">
       {actions && (
        <div
-        className="hidden sm:flex items-center gap-2"
+        className="flex items-center gap-2"
         onClick={(e) => e.stopPropagation()}
        >
         {actions}
@@ -170,24 +169,30 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
     </button>
    </div>
 
+   {/*
+    * CSS Grid animation: transitioning grid-template-rows between 0fr and 1fr
+    * produces a smooth, hardware-accelerated reveal that adapts to any content
+    * height without JS measurement.
+    */}
    <div
     id={contentId}
+    role="region"
     className={cn(
-     'overflow-hidden border-t border-slate-800/70 transition-[max-height,opacity] duration-200 ease-out',
-     isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+     'grid border-t border-slate-800/70 transition-[grid-template-rows,opacity] duration-200 ease-out',
+     isExpanded
+      ? 'grid-rows-[1fr] opacity-100'
+      : 'grid-rows-[0fr] opacity-0 pointer-events-none'
     )}
-    style={{
-     maxHeight: isExpanded ? `${maxHeight}px` : '0px'
-    }}
    >
-    <div
-     ref={innerRef}
-     className={cn(
-      'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
-      contentClassName
-     )}
-    >
-     {children}
+    <div className="overflow-hidden">
+     <div
+      className={cn(
+       'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+       contentClassName
+      )}
+     >
+      {children}
+     </div>
     </div>
    </div>
   </section>
