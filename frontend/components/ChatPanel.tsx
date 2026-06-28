@@ -1,12 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit } from 'lucide-react';
+import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit, Loader2 } from 'lucide-react';
 import { useEngineStore } from '../store';
 import { DiffViewer } from './DiffViewer';
+import { SynapseAI, ConversationTurn } from '../services/synapse';
+
+const CHAT_SYSTEM_PROMPT = `You are SynapseAI, an intelligent multi-agent coding assistant embedded in the Agentic Build Engine.
+Help developers design, debug, and improve their applications.
+Be concise and specific. When suggesting code changes, name the exact file and show only the relevant snippet.
+Do not invent external packages that are not already part of the project.`;
 
 export const ChatPanel: React.FC = () => {
-  const { chatMessages, addChatMessage } = useEngineStore();
+  const { chatMessages, addChatMessage, config } = useEngineStore();
   const [input, setInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,37 +22,60 @@ export const ChatPanel: React.FC = () => {
     }
   }, [chatMessages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    
-    addChatMessage({
-      role: 'user',
-      content: input
-    });
-    
-    setInput('');
-    
-    // Simulate agent thought process
-    setTimeout(() => {
-      addChatMessage({
-        role: 'agent',
-        type: 'thought',
-        content: 'Querying GraphEngine for auth state dependencies... Found 3 files. Planning modifications for NextAuth v5 compatibility.'
-      });
-    }, 800);
+  const handleSend = async () => {
+    if (!input.trim() || isGenerating) return;
 
-    // Simulate agent response
-    setTimeout(() => {
-      addChatMessage({
-        role: 'agent',
-        content: 'I analyzed the request. Here are the necessary changes across the authentication flow and UI components.',
-        diffs: [
-          {
-            filename: 'src/app/api/auth/route.ts',
-            status: 'modified',
-            additions: 4,
-            deletions: 1,
-            content: ` import { NextAuth } from 'next-auth';
+    const userText = input.trim();
+    setInput('');
+
+    addChatMessage({ role: 'user', content: userText });
+
+    if (config.synapseConfig.llmProvider === 'vertex-ai') {
+      setIsGenerating(true);
+      try {
+        const ai = new SynapseAI(config.synapseConfig);
+
+        // Build history from the last 10 non-system messages
+        const history: ConversationTurn[] = chatMessages
+          .filter((m) => m.role !== 'system' && m.type !== 'thought')
+          .slice(-10)
+          .map((m) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            text: m.content
+          }));
+
+        const response = await ai.generate(CHAT_SYSTEM_PROMPT, userText, history);
+
+        addChatMessage({ role: 'agent', content: response });
+      } catch (err: any) {
+        addChatMessage({
+          role: 'agent',
+          content: `⚠️ SynapseAI is unavailable: ${err?.message ?? 'Unknown error'}. Check that the backend proxy is running.`
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      // Simulation fallback (custom provider or no backend)
+      setTimeout(() => {
+        addChatMessage({
+          role: 'agent',
+          type: 'thought',
+          content: 'Querying GraphEngine for auth state dependencies... Found 3 files. Planning modifications for NextAuth v5 compatibility.'
+        });
+      }, 800);
+
+      setTimeout(() => {
+        addChatMessage({
+          role: 'agent',
+          content: 'I analyzed the request. Here are the necessary changes across the authentication flow and UI components.',
+          diffs: [
+            {
+              filename: 'src/app/api/auth/route.ts',
+              status: 'modified',
+              additions: 4,
+              deletions: 1,
+              content: ` import { NextAuth } from 'next-auth';
 -export const GET = NextAuth(authOptions);
 +import { validateSession } from '@/lib/security';
 +
@@ -53,13 +83,13 @@ export const ChatPanel: React.FC = () => {
 +  await validateSession(req);
 +  return NextAuth(authOptions)(req);
 +};`
-          },
-          {
-            filename: 'src/components/Login.tsx',
-            status: 'modified',
-            additions: 2,
-            deletions: 0,
-            content: ` export const Login = () => {
+            },
+            {
+              filename: 'src/components/Login.tsx',
+              status: 'modified',
+              additions: 2,
+              deletions: 0,
+              content: ` export const Login = () => {
 +  const { status } = useSession();
    return (
      <div className="p-4">
@@ -67,10 +97,11 @@ export const ChatPanel: React.FC = () => {
        <LoginForm />
      </div>
    );`
-          }
-        ]
-      });
-    }, 2500);
+            }
+          ]
+        });
+      }, 2500);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -166,6 +197,17 @@ export const ChatPanel: React.FC = () => {
             </div>
           );
         })}
+
+        {isGenerating && (
+          <div className="flex gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-cyan-500/20 text-cyan-400">
+              <Loader2 size={16} className="animate-spin" />
+            </div>
+            <div className="px-3 py-2 rounded-lg text-sm bg-muted text-muted-foreground italic">
+              SynapseAI is thinking…
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-4 border-t border-border bg-background">
@@ -179,11 +221,12 @@ export const ChatPanel: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask Coder or drop image..."
-            className="w-full bg-input border border-border rounded-full pl-10 pr-10 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-shadow"
+            disabled={isGenerating}
+            className="w-full bg-input border border-border rounded-full pl-10 pr-10 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-shadow disabled:opacity-50"
           />
           <button 
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isGenerating}
             className="absolute right-2 p-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-muted disabled:text-muted-foreground text-white rounded-full transition-colors"
           >
             <Send size={14} />
