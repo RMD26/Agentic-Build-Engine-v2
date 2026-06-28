@@ -1,75 +1,195 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-// Strict type definitions for panel properties
-interface CollapsiblePanelProps {
-  title: string;
-  subtitle?: string;
-  badgeText?: string;
-  badgeColorClass?: string; // e.g., 'bg-blue-500/10 text-blue-400'
-  defaultExpanded?: boolean;
-  children: React.ReactNode;
+export interface CollapsiblePanelProps {
+ title: string;
+ subtitle?: string;
+ badgeText?: string;
+ badgeColorClass?: string;
+ defaultExpanded?: boolean;
+ children: React.ReactNode;
+ disabled?: boolean;
+ persistKey?: string;
+ onToggle?: (expanded: boolean) => void;
+ actions?: React.ReactNode;
+ contentClassName?: string;
+ className?: string;
 }
 
-/**
- * CollapsiblePanel - A type-safe, collapsible UI component designed for VS Code Webview.
- * Features isolated state management and a clean Tailwind design tailored for dark mode.
- */
+const cn = (...classes: Array<string | false | null | undefined>) =>
+ classes.filter(Boolean).join(' ');
+
+const safeReadPersistedState = (key: string, fallback: boolean): boolean => {
+ try {
+  if (typeof window === 'undefined') return fallback;
+  const raw = window.sessionStorage?.getItem(key);
+  if (raw === null) return fallback;
+  return raw === 'true';
+ } catch {
+  return fallback;
+ }
+};
+
+const safeWritePersistedState = (key: string, value: boolean) => {
+ try {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage?.setItem(key, String(value));
+ } catch {
+  // Ignore storage errors in restricted webviews
+ }
+};
+
 export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
-  title,
-  subtitle,
-  badgeText,
-  badgeColorClass = 'bg-slate-700 text-slate-300',
-  defaultExpanded = false,
-  children
+ title,
+ subtitle,
+ badgeText,
+ badgeColorClass = 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20',
+ defaultExpanded = false,
+ children,
+ disabled = false,
+ persistKey,
+ onToggle,
+ actions,
+ contentClassName,
+ className
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
+ const reactId = useId();
+ const contentId = useMemo(
+  () => `collapsible-panel-content-${reactId.replace(/:/g, '')}`,
+  [reactId]
+ );
 
-  return (
-    <div className="mb-3 border rounded-lg border-slate-700/60 bg-slate-900/40 overflow-hidden transition-all duration-200 shadow-sm">
-      {/* Panel Header - Clickable zone for toggling state */}
-      <button
-        type="button"
-        className="w-full flex items-center justify-between p-3 text-left bg-slate-800/40 hover:bg-slate-800/80 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
+ const [isExpanded, setIsExpanded] = useState<boolean>(() =>
+  persistKey
+   ? safeReadPersistedState(persistKey, defaultExpanded)
+   : defaultExpanded
+ );
+
+ const innerRef = useRef<HTMLDivElement>(null);
+ const [maxHeight, setMaxHeight] = useState<number>(0);
+
+ useEffect(() => {
+  if (innerRef.current) {
+   setMaxHeight(innerRef.current.scrollHeight);
+  }
+ }, [children, isExpanded]);
+
+ useEffect(() => {
+  if (persistKey) safeWritePersistedState(persistKey, isExpanded);
+  onToggle?.(isExpanded);
+ }, [isExpanded, persistKey, onToggle]);
+
+ const handleToggle = () => {
+  if (disabled) return;
+  setIsExpanded((prev) => !prev);
+ };
+
+ return (
+  <section
+   className={cn(
+    'mb-3 overflow-hidden rounded-lg border border-slate-800/80 bg-slate-950/40 shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
+    'backdrop-blur-[2px]',
+    disabled && 'opacity-60',
+    className
+   )}
+  >
+   <div className="flex items-stretch">
+    <button
+     type="button"
+     onClick={handleToggle}
+     disabled={disabled}
+     aria-expanded={isExpanded}
+     aria-controls={contentId}
+     className={cn(
+      'group flex min-h-[52px] flex-1 items-center justify-between gap-3 px-3 py-3 text-left',
+      'bg-slate-900/50 transition-colors duration-200',
+      disabled
+       ? 'cursor-not-allowed'
+       : 'hover:bg-slate-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40'
+     )}
+    >
+     <div className="flex min-w-0 items-center gap-3">
+      <span
+       className={cn(
+        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-slate-800 bg-slate-900/80',
+        'text-slate-400 transition-colors duration-200',
+        !disabled && 'group-hover:text-slate-200'
+       )}
+       aria-hidden="true"
       >
-        <div className="flex items-center space-x-3 truncate">
-          {/* Chevron Icon with state-based rotation animation */}
-          <svg
-            className={`w-4 h-4 text-slate-400 transform transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-
-          <div className="truncate">
-            <span className="font-medium text-sm text-slate-200 tracking-wide">{title}</span>
-            {subtitle && (
-              <p className="text-xs text-slate-400 truncate mt-0.5 font-mono">{subtitle}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Optional Badge (e.g., for Agent Role identification) */}
-        {badgeText && (
-          <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase font-mono ${badgeColorClass} flex-shrink-0`}>
-            {badgeText}
-          </span>
+       <svg
+        className={cn(
+         'h-4 w-4 transform transition-transform duration-200 ease-out',
+         isExpanded && 'rotate-90'
         )}
-      </button>
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+       >
+        <path
+         strokeLinecap="round"
+         strokeLinejoin="round"
+         strokeWidth={2}
+         d="M9 5l7 7-7 7"
+        />
+       </svg>
+      </span>
 
-      {/* Animated Panel Content - Visible only when isExpanded is true */}
-      <div
-        className={`transition-all duration-200 ease-in-out ${
-          isExpanded ? 'max-h-[1000px] opacity-100 border-t border-slate-800/80 p-4 bg-slate-950/20' : 'max-h-0 opacity-0 pointer-events-none'
-        } overflow-y-auto`}
-      >
-        <div className="text-sm text-slate-300 leading-relaxed font-normal">
-          {children}
-        </div>
+      <div className="min-w-0">
+       <div className="truncate text-sm font-semibold tracking-[0.01em] text-slate-100">
+        {title}
+       </div>
+       {subtitle && (
+        <p className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-[0.08em] text-slate-500">
+         {subtitle}
+        </p>
+       )}
       </div>
+     </div>
+
+     <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+      {actions && (
+       <div
+        className="hidden sm:flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+       >
+        {actions}
+       </div>
+      )}
+
+      {badgeText && (
+       <span
+        className={cn(
+         'inline-flex items-center rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]',
+         badgeColorClass
+        )}
+       >
+        {badgeText}
+       </span>
+      )}
+     </div>
+    </button>
+   </div>
+
+   <div
+    id={contentId}
+    className={cn(
+     'overflow-hidden border-t border-slate-800/70 transition-[max-height,opacity] duration-200 ease-out',
+     isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+    )}
+    style={{
+     maxHeight: isExpanded ? `${maxHeight}px` : '0px'
+    }}
+   >
+    <div
+     ref={innerRef}
+     className={cn(
+      'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+      contentClassName
+     )}
+    >
+     {children}
     </div>
-  );
+   </div>
+  </section>
+ );
 };
