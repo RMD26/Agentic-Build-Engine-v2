@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 
 export interface CollapsiblePanelProps {
  title: string;
@@ -63,15 +63,6 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
    ? safeReadPersistedState(persistKey, defaultExpanded)
    : defaultExpanded
  );
-
- const innerRef = useRef<HTMLDivElement>(null);
- const [maxHeight, setMaxHeight] = useState<number>(0);
-
- useEffect(() => {
-  if (innerRef.current) {
-   setMaxHeight(innerRef.current.scrollHeight);
-  }
- }, [children, isExpanded]);
 
  useEffect(() => {
   if (persistKey) safeWritePersistedState(persistKey, isExpanded);
@@ -172,18 +163,19 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
 
    <div
     id={contentId}
+    role="region"
     className={cn(
-     'overflow-hidden border-t border-slate-800/70 transition-[max-height,opacity] duration-200 ease-out',
+     'border-t border-slate-800/70 transition-[grid-template-rows,opacity] duration-200 ease-out',
      isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
     )}
     style={{
-     maxHeight: isExpanded ? `${maxHeight}px` : '0px'
+     display: 'grid',
+     gridTemplateRows: isExpanded ? '1fr' : '0fr',
     }}
    >
     <div
-     ref={innerRef}
      className={cn(
-      'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+      'overflow-hidden bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
       contentClassName
      )}
     >
