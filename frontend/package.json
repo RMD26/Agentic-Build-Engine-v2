@@ -9,10 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^12.42.0",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "zustand": "latest",
-    "lucide-react": "latest"
+    "zustand": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
