@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/react-window": "^1.8.8",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "zustand": "latest",
-    "lucide-react": "latest"
+    "react-window": "^2.2.7",
+    "zustand": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
