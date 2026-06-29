@@ -1,28 +1,56 @@
-# CollapsiblePanel Improvements
+# CollapsiblePanel
 
-The `CollapsiblePanel` component has been completely rewritten to meet production-grade standards for a VS Code-style webview environment.
+A production-grade collapsible panel component for VS Code-style dark webview interfaces.
 
-## Key Architectural Upgrades
+## Key Architectural Decisions
 
 1. **CSS Grid Animation Strategy:**
-   Instead of relying on hardcoded `max-height` values (which cause janky animations or clip content) or external animation libraries, the component uses a modern CSS Grid trick:
-   `grid-template-rows: 0fr` transitioning to `grid-template-rows: 1fr`. 
-   This ensures a buttery-smooth, hardware-accelerated open/close animation that perfectly adapts to dynamic content heights.
+   Instead of JS-measured `max-height` values (which require `scrollHeight` reads and cause content-clipping bugs), the component transitions `grid-template-rows` between `0fr` and `1fr`.
+   This produces a buttery-smooth, hardware-accelerated open/close animation that adapts to any content height with zero JavaScript measurement.
 
 2. **Strict Accessibility (a11y):**
-   - Implemented `useId()` to generate unique, deterministic IDs for ARIA mapping.
-   - Added `aria-expanded`, `aria-controls`, and `aria-disabled` attributes.
-   - The header is a native `<button>`, ensuring full keyboard navigability (Space/Enter to toggle) and proper focus management (`focus-visible:ring`).
+   - `useId()` generates unique, deterministic IDs for ARIA mapping between the header button and content region.
+   - `aria-expanded`, `aria-controls`, `aria-disabled`, and `role="region"` are set correctly.
+   - The header is a native `<button>` — Space/Enter toggle works out of the box, and `focus-visible:ring` provides a crisp keyboard focus indicator.
 
 3. **Safe State Persistence:**
-   - Added a `persistKey` prop to remember the user's expanded/collapsed preference.
-   - Wrapped `localStorage` access in `try/catch` blocks. This is critical for VS Code Webviews and sandboxed iframes, where accessing `localStorage` can throw synchronous DOMExceptions if storage access is restricted.
+   - The `persistKey` prop stores the expanded state in `sessionStorage`.
+   - All storage access is wrapped in `try/catch` — critical for VS Code Webviews and sandboxed iframes where storage APIs can throw synchronous `DOMException`s.
 
-4. **Action Area & Event Propagation:**
-   - Added an `actions` prop for right-aligned controls (e.g., Play, Settings, Delete buttons).
-   - Implemented `e.stopPropagation()` on the actions container so interacting with buttons inside the header doesn't accidentally toggle the panel.
+4. **Correct `onToggle` Lifecycle:**
+   - A `useRef` mount guard ensures `onToggle` is not called on the initial render, only on actual user-driven state changes.
 
-5. **VS Code / Developer Aesthetic:**
-   - Removed generic "bubbly" UI traits.
-   - Used tight padding, crisp 1px borders, muted slate backgrounds (`bg-card`, `bg-muted`), and monospace typography for subtitles to perfectly mimic the native VS Code Explorer/Panel aesthetic.
-   - Added a `disabled` state that visually dims the panel and prevents interaction.
+5. **Action Area & Event Propagation:**
+   - The `actions` prop renders right-aligned controls inside the header.
+   - `e.stopPropagation()` on the actions container prevents clicks from toggling the panel, and actions are always visible (not hidden on mobile).
+
+6. **VS Code / Developer Aesthetic:**
+   - Tight padding, crisp 1px slate borders, muted `slate-950/40` backgrounds, and monospace uppercase subtitles mirror the native VS Code panel aesthetic.
+   - `disabled` prop dims the panel with `opacity-60` and blocks interaction via `cursor-not-allowed`.
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `title` | `string` | — | Panel header title |
+| `subtitle` | `string?` | — | Mono uppercase subtitle below title |
+| `badgeText` | `string?` | — | Optional label badge |
+| `badgeColorClass` | `string?` | cyan | Tailwind classes for badge color |
+| `defaultExpanded` | `boolean?` | `false` | Initial expanded state |
+| `children` | `React.ReactNode` | — | Panel body content |
+| `disabled` | `boolean?` | `false` | Dims and disables toggle |
+| `persistKey` | `string?` | — | `sessionStorage` key for persistence |
+| `onToggle` | `(expanded: boolean) => void` | — | Callback on state change |
+| `actions` | `React.ReactNode?` | — | Right-aligned header controls |
+| `contentClassName` | `string?` | — | Extra classes for content area |
+| `className` | `string?` | — | Extra classes for root element |
+
+## Example Usage
+
+```tsx
+import { CollapsiblePanel } from './components/CollapsiblePanel';
+import { CollapsiblePanelExample } from './components/CollapsiblePanelExample';
+
+// Full demo with two panels (standard + disabled)
+<CollapsiblePanelExample />
+```
