@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 
 export interface CollapsiblePanelProps {
  title: string;
@@ -72,6 +72,7 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
    isMounted.current = true;
    return;
   }
+ useEffect(() => {
   if (persistKey) safeWritePersistedState(persistKey, isExpanded);
   onToggle?.(isExpanded);
  }, [isExpanded, persistKey, onToggle]);
@@ -193,6 +194,21 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
      >
       {children}
      </div>
+     'border-t border-slate-800/70 transition-[grid-template-rows,opacity] duration-200 ease-out',
+     isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+    )}
+    style={{
+     display: 'grid',
+     gridTemplateRows: isExpanded ? '1fr' : '0fr',
+    }}
+   >
+    <div
+     className={cn(
+      'overflow-hidden bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+      contentClassName
+     )}
+    >
+     {children}
     </div>
    </div>
   </section>
