@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit } from 'lucide-react';
 import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit, Loader2 } from 'lucide-react';
 import { useEngineStore } from '../store';
 import { DiffViewer } from './DiffViewer';
