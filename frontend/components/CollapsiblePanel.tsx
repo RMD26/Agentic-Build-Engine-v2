@@ -181,6 +181,14 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
   if (isExpanded) setHasOpened(true);
  }, [isExpanded]);
 
+ // Guard against firing onToggle on initial mount
+ const isMounted = useRef(false);
+
+ useEffect(() => {
+  if (!isMounted.current) {
+   isMounted.current = true;
+   return;
+  }
  useEffect(() => {
   if (!useMotion && innerRef.current) {
    setMaxHeight(innerRef.current.scrollHeight);
@@ -228,6 +236,31 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
       aria-hidden="true"
      >
       {icon ?? (
+   <div className="flex items-stretch">
+    <button
+     type="button"
+     onClick={handleToggle}
+     disabled={disabled}
+     aria-expanded={isExpanded}
+     aria-controls={contentId}
+     aria-disabled={disabled}
+     className={cn(
+      'group flex min-h-[52px] flex-1 items-center justify-between gap-3 px-3 py-3 text-left',
+      'bg-slate-900/50 transition-colors duration-200',
+      disabled
+       ? 'cursor-not-allowed'
+       : 'hover:bg-slate-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40'
+     )}
+    >
+     <div className="flex min-w-0 items-center gap-3">
+      <span
+       className={cn(
+        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-slate-800 bg-slate-900/80',
+        'text-slate-400 transition-colors duration-200',
+        !disabled && 'group-hover:text-slate-200'
+       )}
+       aria-hidden="true"
+      >
        <svg
         className={cn(
          'h-4 w-4 transform transition-transform duration-200 ease-out',
@@ -299,6 +332,8 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
          'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
          contentClassName
         )}
+        className="flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
        >
         {children}
        </div>
@@ -336,6 +371,54 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
       </div>
      ))}
    </AnimatePresence>
+        {badgeText}
+       </span>
+      )}
+     </div>
+    </button>
+   </div>
+
+   {/*
+    * CSS Grid animation: transitioning grid-template-rows between 0fr and 1fr
+    * produces a smooth, hardware-accelerated reveal that adapts to any content
+    * height without JS measurement.
+    */}
+   <div
+    id={contentId}
+    role="region"
+    className={cn(
+     'grid border-t border-slate-800/70 transition-[grid-template-rows,opacity] duration-200 ease-out',
+     isExpanded
+      ? 'grid-rows-[1fr] opacity-100'
+      : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+    )}
+   >
+    <div className="overflow-hidden">
+     <div
+      className={cn(
+       'bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+       contentClassName
+      )}
+     >
+      {children}
+     </div>
+     'border-t border-slate-800/70 transition-[grid-template-rows,opacity] duration-200 ease-out',
+     isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+    )}
+    style={{
+     display: 'grid',
+     gridTemplateRows: isExpanded ? '1fr' : '0fr',
+    }}
+   >
+    <div
+     className={cn(
+      'overflow-hidden bg-slate-950/30 px-4 py-4 text-sm leading-relaxed text-slate-300',
+      contentClassName
+     )}
+    >
+     {children}
+    </div>
+   </div>
   </section>
  );
 };
