@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileCode2, Check, X } from 'lucide-react';
 import { DiffFile } from '../types';
 
@@ -9,9 +9,15 @@ interface DiffViewerProps {
 export const DiffViewer: React.FC<DiffViewerProps> = ({ files }) => {
   const [applied, setApplied] = useState(false);
 
+  useEffect(() => {
+    if (applied) {
+      const timer = setTimeout(() => setApplied(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [applied]);
+
   const handleApplyAll = () => {
     setApplied(true);
-    setTimeout(() => setApplied(false), 2500);
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Header } from './components/Header';
 import { ConfigPanel } from './components/ConfigPanel';
@@ -37,7 +37,7 @@ const App: React.FC = () => {
   // Local state for the Webview Timeline
   const [timelineLogs, setTimelineLogs] = useState<TimelineEvent[]>([]);
   const [activeView, setActiveView] = useState<'timeline' | 'graph'>('timeline');
-  const [prevPhase, setPrevPhase] = useState<string | null>(null);
+  const prevPhaseRef = useRef<string | null>(null);
 
   // ============================================================================
   // WEBVIEW LISTENER (Frontend)
@@ -51,24 +51,21 @@ const App: React.FC = () => {
         setConductorState(newState);
         
         // --- PersonaGraph phase sync ---
+        const prevPhase = prevPhaseRef.current;
         const newPersonaId = PHASE_TO_PERSONA[newState.currentPhase];
-        setPrevPhase((prev) => {
-          const prevPersonaId = prev ? PHASE_TO_PERSONA[prev] : null;
-          if (prevPersonaId && prevPersonaId !== newPersonaId) {
-            markPhaseComplete(prevPersonaId);
-          }
-          return newState.currentPhase;
-        });
+        const prevPersonaId = prevPhase ? PHASE_TO_PERSONA[prevPhase] : null;
+
+        if (prevPersonaId && prevPersonaId !== newPersonaId) {
+          markPhaseComplete(prevPersonaId);
+        }
+
         if (newPersonaId) {
           setActivePhase(newPersonaId);
         } else if (newState.currentPhase === 'SUCCESS' || newState.currentPhase === 'FAILURE') {
-          // Mark the last active phase complete on terminal states
           setActivePhase(null);
-          if (prevPhase) {
-            const lastPersonaId = PHASE_TO_PERSONA[prevPhase];
-            if (lastPersonaId) markPhaseComplete(lastPersonaId);
-          }
         }
+
+        prevPhaseRef.current = newState.currentPhase;
         
         if (message.payload.log) {
           const log = message.payload.log;
@@ -102,7 +99,7 @@ const App: React.FC = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevPhase]);
+  }, []);
 
   // ============================================================================
   // EXTENSION HOST SIMULATOR (Backend)
@@ -113,7 +110,7 @@ const App: React.FC = () => {
     // Reset timeline and phase state on new run
     setTimelineLogs([]);
     setActivePhase(null);
-    setPrevPhase(null);
+    prevPhaseRef.current = null;
 
     const activeConfig = config.synapseConfig;
 
