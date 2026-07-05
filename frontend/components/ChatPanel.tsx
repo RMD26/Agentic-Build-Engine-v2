@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit } from 'lucide-react';
 import { Send, Image as ImageIcon, Bot, User, Sparkles, BrainCircuit, Loader2 } from 'lucide-react';
 import { useEngineStore } from '../store';
 import { DiffViewer } from './DiffViewer';
@@ -169,11 +171,18 @@ export const ChatPanel: React.FC = () => {
           </div>
         )}
 
+        <AnimatePresence initial={false}>
         {chatMessages.map((msg) => {
           const isThought = msg.type === 'thought';
           
           return (
-            <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            >
               <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                 msg.role === 'user' ? 'bg-secondary text-secondary-foreground' : 
                 msg.role === 'system' ? 'bg-purple-500/20 text-purple-400' : 
@@ -194,9 +203,10 @@ export const ChatPanel: React.FC = () => {
                 )}
                 {msg.diffs && <DiffViewer files={msg.diffs} />}
               </div>
-            </div>
+            </motion.div>
           );
         })}
+        </AnimatePresence>
 
         {isGenerating && (
           <div className="flex gap-3">

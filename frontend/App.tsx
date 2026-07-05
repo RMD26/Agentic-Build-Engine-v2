@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Header } from './components/Header';
 import { ConfigPanel } from './components/ConfigPanel';
 import { PersonaGraph } from './components/PersonaGraph';
@@ -136,11 +137,31 @@ const App: React.FC = () => {
           </div>
 
           {/* Main Content Area */}
+          <AnimatePresence mode="wait">
           {activeView === 'timeline' ? (
-            <AgentTimeline logs={timelineLogs} />
+            <motion.div
+              key="timeline"
+              className="flex-1 flex flex-col min-h-0"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <AgentTimeline logs={timelineLogs} />
+            </motion.div>
           ) : (
-            <PersonaGraph />
+            <motion.div
+              key="graph"
+              className="flex-1 flex flex-col min-h-0"
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <PersonaGraph />
+            </motion.div>
           )}
+          </AnimatePresence>
           
           <ApprovalBanner />
           <Terminal />

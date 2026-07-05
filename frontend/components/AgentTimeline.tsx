@@ -1,4 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { BrainCircuit, Code2, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { StateLog } from '../types';
 import { BrainCircuit, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
 import { TimelineEvent } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
@@ -54,12 +57,20 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
             {logs.length === 0 ? (
               <div className="text-sm text-muted-foreground italic pl-14">Awaiting workflow execution...</div>
             ) : (
-              logs.map((log, index) => {
+              <AnimatePresence initial={false}>
+              {logs.map((log, index) => {
                 const isLast = index === logs.length - 1;
                 const isSuccess = log.status === 'success';
                 const isFailure = log.status === 'error';
 
                 return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="flex gap-4 relative group"
+                  >
                   <div key={log.id} className="flex gap-4 relative group">
                     {/* Timeline Node */}
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-background z-10 transition-colors duration-300 mt-1 ${
@@ -86,9 +97,10 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
                         </p>
                       </CollapsiblePanel>
                     </div>
-                  </div>
+                  </motion.div>
                 );
-              })
+              })}
+              </AnimatePresence>
             )}
           </div>
         </div>
