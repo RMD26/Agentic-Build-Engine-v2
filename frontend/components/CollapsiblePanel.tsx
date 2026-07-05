@@ -1,3 +1,6 @@
+// Re-export from the canonical panels/ location so all existing imports keep working.
+export { CollapsiblePanel } from './panels/CollapsiblePanel';
+export type { CollapsiblePanelProps } from './panels/CollapsiblePanel';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
