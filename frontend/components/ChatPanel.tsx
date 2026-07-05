@@ -17,6 +17,11 @@ export const ChatPanel: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => { imageTimeoutsRef.current.forEach(clearTimeout); };
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -115,19 +120,23 @@ export const ChatPanel: React.FC = () => {
         content: 'Please fix the alignment issue shown in this screenshot.',
         image: event.target?.result as string
       });
-      setTimeout(() => {
-        addChatMessage({
-          role: 'agent',
-          type: 'thought',
-          content: 'Analyzing image via Vertex AI Vision... Detected flexbox misalignment in Header component.'
-        });
-      }, 1000);
-      setTimeout(() => {
-        addChatMessage({
-          role: 'agent',
-          content: 'I see the issue. The flex container is missing `items-center`. I will patch the Tailwind classes in `Header.tsx`.',
-        });
-      }, 2500);
+      imageTimeoutsRef.current.push(
+        setTimeout(() => {
+          addChatMessage({
+            role: 'agent',
+            type: 'thought',
+            content: 'Analyzing image via Vertex AI Vision... Detected flexbox misalignment in Header component.'
+          });
+        }, 1000)
+      );
+      imageTimeoutsRef.current.push(
+        setTimeout(() => {
+          addChatMessage({
+            role: 'agent',
+            content: 'I see the issue. The flex container is missing `items-center`. I will patch the Tailwind classes in `Header.tsx`.',
+          });
+        }, 2500)
+      );
     };
     reader.readAsDataURL(file);
   };
@@ -230,9 +239,10 @@ export const ChatPanel: React.FC = () => {
         />
         <div className="relative flex items-center">
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
+            aria-label="Upload screenshot"
             className="absolute left-3 text-muted-foreground hover:text-foreground transition-colors"
-            title="Upload screenshot"
           >
             <ImageIcon size={18} />
           </button>

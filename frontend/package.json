@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.4",
-    "@types/react-window": "^1.8.8",
     "framer-motion": "^12.42.0",
     "lucide-react": "latest",
     "motion": "^12.42.0",
@@ -21,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "latest",
     "typescript": "latest",
     "vite": "latest"
