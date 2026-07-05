@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileCode2, Check, X } from 'lucide-react';
 import { DiffFile } from '../types';
 
@@ -7,6 +7,19 @@ interface DiffViewerProps {
 }
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({ files }) => {
+  const [applied, setApplied] = useState(false);
+
+  useEffect(() => {
+    if (applied) {
+      const timer = setTimeout(() => setApplied(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [applied]);
+
+  const handleApplyAll = () => {
+    setApplied(true);
+  };
+
   return (
     <div className="mt-2 border border-border rounded-md overflow-hidden bg-card text-xs font-mono">
       <div className="bg-muted/50 px-3 py-2 border-b border-border flex items-center justify-between">
@@ -14,8 +27,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ files }) => {
           <FileCode2 size={14} />
           <span>Proposed Changes ({files.length} files)</span>
         </div>
-        <button className="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded text-[10px] font-sans font-medium transition-colors">
-          Apply All
+        <button
+          onClick={handleApplyAll}
+          disabled={applied}
+          className={`px-3 py-1 rounded text-[10px] font-sans font-medium transition-colors ${
+            applied
+              ? 'bg-emerald-600 text-white cursor-default'
+              : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+          }`}
+        >
+          {applied ? '✓ Applied!' : 'Apply All'}
         </button>
       </div>
       

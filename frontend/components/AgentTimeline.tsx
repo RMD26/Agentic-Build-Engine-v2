@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { BrainCircuit, Code2, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
-import { StateLog } from '../types';
-import { BrainCircuit, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
 import { TimelineEvent } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
 
@@ -22,6 +20,7 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
   const getActorIcon = (actor: string) => {
     switch (actor) {
       case 'CONDUCTOR': return <BrainCircuit size={16} className="text-purple-400" />;
+      case 'CODER': return <Code2 size={16} className="text-cyan-400" />;
       case 'REVIEWER': return <ShieldCheck size={16} className="text-emerald-400" />;
       case 'RUNNER': return <TerminalSquare size={16} className="text-amber-400" />;
       default: return <Settings size={16} className="text-gray-400" />;
@@ -65,13 +64,12 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
 
                 return (
                   <motion.div
-                    key={index}
+                    key={log.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}
                     className="flex gap-4 relative group"
                   >
-                  <div key={log.id} className="flex gap-4 relative group">
                     {/* Timeline Node */}
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 bg-background z-10 transition-colors duration-300 mt-1 ${
                       isSuccess ? 'border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]' :
