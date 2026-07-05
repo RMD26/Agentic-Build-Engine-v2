@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Header } from './components/Header';
 import { ConfigPanel } from './components/ConfigPanel';
 import { PersonaGraph } from './components/PersonaGraph';
@@ -9,7 +10,7 @@ import { SynapseConfigEditor } from './components/SynapseConfigEditor';
 import { ApprovalBanner } from './components/ApprovalBanner';
 import { useEngineStore } from './store';
 import { ConductorEngine } from './services/engine';
-import { StateLog, WebviewMessage } from './types';
+import { TimelineEvent, WebviewMessage } from './types';
 import { Network, ListTree } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -24,7 +25,7 @@ const App: React.FC = () => {
   } = useEngineStore();
 
   // Local state for the Webview Timeline
-  const [timelineLogs, setTimelineLogs] = useState<StateLog[]>([]);
+  const [timelineLogs, setTimelineLogs] = useState<TimelineEvent[]>([]);
   const [activeView, setActiveView] = useState<'timeline' | 'graph'>('timeline');
 
   // ============================================================================
@@ -45,11 +46,11 @@ const App: React.FC = () => {
           setTimelineLogs((prev) => [...prev, log]);
           
           // Sync with global store for Terminal and Chat
-          const isError = log.phase === 'FAILURE';
-          const isSuccess = log.phase === 'SUCCESS';
+          const isError = log.status === 'error';
+          const isSuccess = log.status === 'success';
           
           addLog(
-            log.agent,
+            log.actor,
             log.message,
             isError ? 'error' : isSuccess ? 'success' : 'info',
             'orchestrator'
@@ -58,7 +59,7 @@ const App: React.FC = () => {
           addChatMessage({
             role: 'agent',
             type: 'thought',
-            content: `[${log.agent}] ${log.message}`
+            content: `[${log.actor}] ${log.message}`
           });
         }
         
@@ -136,11 +137,31 @@ const App: React.FC = () => {
           </div>
 
           {/* Main Content Area */}
+          <AnimatePresence mode="wait">
           {activeView === 'timeline' ? (
-            <AgentTimeline logs={timelineLogs} />
+            <motion.div
+              key="timeline"
+              className="flex-1 flex flex-col min-h-0"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <AgentTimeline logs={timelineLogs} />
+            </motion.div>
           ) : (
-            <PersonaGraph />
+            <motion.div
+              key="graph"
+              className="flex-1 flex flex-col min-h-0"
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <PersonaGraph />
+            </motion.div>
           )}
+          </AnimatePresence>
           
           <ApprovalBanner />
           <Terminal />
