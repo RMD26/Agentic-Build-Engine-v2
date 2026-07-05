@@ -1,4 +1,4 @@
-import { SystemState, AgentContext, SynapseConfig, StateLog, WebviewMessage, WorkspaceMutation, AgentRole } from '../types';
+import { SystemState, AgentContext, SynapseConfig, StateLog, WebviewMessage, WorkspaceMutation, AgentRole, TimelineActor, TimelineStatus, TimelineEvent } from '../types';
 import { CoderAgent, ReviewerAgent, RunnerAgent } from './agents';
 
 export class ConductorEngine {
@@ -128,13 +128,41 @@ export class ConductorEngine {
       phase
     };
     this.context.history.push(logEntry);
-    this.broadcastState(logEntry);
+
+    const actorMap: Record<AgentRole, TimelineActor> = {
+      CONDUCTOR: 'CONDUCTOR',
+      CODER: 'CONDUCTOR',
+      REVIEWER: 'REVIEWER',
+      RUNNER: 'RUNNER',
+      SYSTEM: 'SYSTEM'
+    };
+
+    const statusMap: Record<SystemState['currentPhase'], TimelineStatus> = {
+      ANALYSIS: 'info',
+      CODING: 'info',
+      REVIEW: 'info',
+      TESTING: 'testing',
+      SUCCESS: 'success',
+      FAILURE: 'error',
+      INTERRUPTED: 'warning'
+    };
+
+    const timelineEvent: TimelineEvent = {
+      id: Math.random().toString(36).substring(2, 9),
+      actor: actorMap[agent],
+      status: statusMap[phase],
+      message,
+      timestamp: new Date().toISOString(),
+      step: phase
+    };
+
+    this.broadcastState(timelineEvent);
   }
 
   /**
    * Broadcasts data securely over the established API Bridge boundary
    */
-  private broadcastState(latestLog?: StateLog): void {
+  private broadcastState(latestLog?: TimelineEvent): void {
     this.onStateUpdateCallback({
       type: 'AGENT_STATE_UPDATE',
       payload: {
