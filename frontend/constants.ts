@@ -21,6 +21,7 @@ export const EXECUTION_SEQUENCE: PhaseId[] = ['M', 'A', 'B', 'C', 'D', 'F', 'L',
 
 export const DEFAULT_CONFIG: ProjectConfig = {
   name: 'nexus-core-app',
+  task: 'Implement secure validation helper for session tokens',
   framework: 'Next.js 14+ (App Router)',
   ui: 'Tailwind CSS + shadcn/ui',
   database: 'Prisma + PostgreSQL',

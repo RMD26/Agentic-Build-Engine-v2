@@ -16,6 +16,7 @@ export const ChatPanel: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -105,6 +106,32 @@ export const ChatPanel: React.FC = () => {
     }
   };
 
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      addChatMessage({
+        role: 'user',
+        content: 'Please fix the alignment issue shown in this screenshot.',
+        image: event.target?.result as string
+      });
+      setTimeout(() => {
+        addChatMessage({
+          role: 'agent',
+          type: 'thought',
+          content: 'Analyzing image via Vertex AI Vision... Detected flexbox misalignment in Header component.'
+        });
+      }, 1000);
+      setTimeout(() => {
+        addChatMessage({
+          role: 'agent',
+          content: 'I see the issue. The flex container is missing `items-center`. I will patch the Tailwind classes in `Header.tsx`.',
+        });
+      }, 2500);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -117,34 +144,8 @@ export const ChatPanel: React.FC = () => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        addChatMessage({
-          role: 'user',
-          content: 'Please fix the alignment issue shown in this screenshot.',
-          image: event.target?.result as string
-        });
-        
-        setTimeout(() => {
-          addChatMessage({
-            role: 'agent',
-            type: 'thought',
-            content: 'Analyzing image via Vertex AI Vision... Detected flexbox misalignment in Header component.'
-          });
-        }, 1000);
-
-        setTimeout(() => {
-          addChatMessage({
-            role: 'agent',
-            content: 'I see the issue. The flex container is missing `items-center`. I will patch the Tailwind classes in `Header.tsx`.',
-          });
-        }, 2500);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) processImageFile(file);
   };
 
   return (
@@ -220,8 +221,19 @@ export const ChatPanel: React.FC = () => {
       </div>
 
       <div className="p-4 border-t border-border bg-background">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) processImageFile(f); e.target.value = ''; }}
+        />
         <div className="relative flex items-center">
-          <button className="absolute left-3 text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute left-3 text-muted-foreground hover:text-foreground transition-colors"
+            title="Upload screenshot"
+          >
             <ImageIcon size={18} />
           </button>
           <input 

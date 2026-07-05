@@ -30,6 +30,7 @@ export interface SynapseConfig {
 
 export interface ProjectConfig {
   name: string;
+  task: string;
   framework: string;
   ui: string;
   database: string;
@@ -116,7 +117,7 @@ export interface StateLog {
   phase: SystemState['currentPhase'];
 }
 
-export type TimelineActor = 'CONDUCTOR' | 'RUNNER' | 'REVIEWER' | 'SYSTEM';
+export type TimelineActor = 'CONDUCTOR' | 'CODER' | 'RUNNER' | 'REVIEWER' | 'SYSTEM';
 export type TimelineStatus = 'testing' | 'success' | 'warning' | 'error' | 'info';
 
 export interface TimelineEvent {

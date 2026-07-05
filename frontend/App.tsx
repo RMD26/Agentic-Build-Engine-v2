@@ -10,8 +10,16 @@ import { SynapseConfigEditor } from './components/SynapseConfigEditor';
 import { ApprovalBanner } from './components/ApprovalBanner';
 import { useEngineStore } from './store';
 import { ConductorEngine } from './services/engine';
-import { TimelineEvent, WebviewMessage } from './types';
+import { TimelineEvent, WebviewMessage, PhaseId } from './types';
 import { Network, ListTree } from 'lucide-react';
+
+// Maps the engine's SystemState phases to the PersonaGraph PhaseId nodes
+const PHASE_TO_PERSONA: Partial<Record<string, PhaseId>> = {
+  ANALYSIS: 'A',
+  CODING: 'F',
+  REVIEW: 'L',
+  TESTING: 'E',
+};
 
 const App: React.FC = () => {
   const { 
@@ -21,31 +29,53 @@ const App: React.FC = () => {
     config,
     setConductorState,
     setPendingApproval,
-    addChatMessage
+    addChatMessage,
+    setActivePhase,
+    markPhaseComplete,
   } = useEngineStore();
 
   // Local state for the Webview Timeline
   const [timelineLogs, setTimelineLogs] = useState<TimelineEvent[]>([]);
   const [activeView, setActiveView] = useState<'timeline' | 'graph'>('timeline');
+  const [prevPhase, setPrevPhase] = useState<string | null>(null);
 
   // ============================================================================
   // WEBVIEW LISTENER (Frontend)
-  // Bezpečné zachytávanie správ posielaných z Extension Hostu cez VS Code API Bridge
   // ============================================================================
   useEffect(() => {
     const handleMessage = (event: MessageEvent<WebviewMessage>) => {
       const message = event.data;
       
       if (message?.type === 'AGENT_STATE_UPDATE') {
-        setConductorState(message.payload.state);
+        const newState = message.payload.state;
+        setConductorState(newState);
+        
+        // --- PersonaGraph phase sync ---
+        const newPersonaId = PHASE_TO_PERSONA[newState.currentPhase];
+        setPrevPhase((prev) => {
+          const prevPersonaId = prev ? PHASE_TO_PERSONA[prev] : null;
+          if (prevPersonaId && prevPersonaId !== newPersonaId) {
+            markPhaseComplete(prevPersonaId);
+          }
+          return newState.currentPhase;
+        });
+        if (newPersonaId) {
+          setActivePhase(newPersonaId);
+        } else if (newState.currentPhase === 'SUCCESS' || newState.currentPhase === 'FAILURE') {
+          // Mark the last active phase complete on terminal states
+          setActivePhase(null);
+          if (prevPhase) {
+            const lastPersonaId = PHASE_TO_PERSONA[prevPhase];
+            if (lastPersonaId) markPhaseComplete(lastPersonaId);
+          }
+        }
         
         if (message.payload.log) {
           const log = message.payload.log;
           
-          // Immutabilné pridanie nového logu do časovej osi
+          // Immutably add new log to the timeline
           setTimelineLogs((prev) => [...prev, log]);
           
-          // Sync with global store for Terminal and Chat
           const isError = log.status === 'error';
           const isSuccess = log.status === 'success';
           
@@ -63,7 +93,7 @@ const App: React.FC = () => {
           });
         }
         
-        if (message.payload.state.currentPhase === 'SUCCESS' || message.payload.state.currentPhase === 'FAILURE') {
+        if (newState.currentPhase === 'SUCCESS' || newState.currentPhase === 'FAILURE') {
            stopEngine();
         }
       }
@@ -72,7 +102,7 @@ const App: React.FC = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prevPhase]);
 
   // ============================================================================
   // EXTENSION HOST SIMULATOR (Backend)
@@ -80,21 +110,21 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isRunning) return;
 
-    // Reset timeline on new run
+    // Reset timeline and phase state on new run
     setTimelineLogs([]);
+    setActivePhase(null);
+    setPrevPhase(null);
 
     const activeConfig = config.synapseConfig;
 
     const engine = new ConductorEngine(
-      "Implement secure validation helper for session tokens",
+      config.task || 'Implement secure validation helper for session tokens',
       "/workspace",
       activeConfig,
       (message) => {
-        // Post messaging system bridge to your React Webview instance
         window.postMessage(message, '*');
       },
       (operation, resumeToken) => {
-        // Display interaction prompts directly inside VS Code UI or via webview action panel
         setPendingApproval({ operation, resumeToken });
       }
     );

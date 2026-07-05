@@ -49,6 +49,18 @@ export const ConfigPanel: React.FC = () => {
         </div>
 
         <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Task / Prompt</label>
+          <textarea
+            value={config.task}
+            onChange={(e) => setConfig({ task: e.target.value })}
+            disabled={isRunning}
+            rows={3}
+            placeholder="Describe the task for the agents..."
+            className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 disabled:opacity-50 transition-colors resize-none"
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Framework</label>
           <select 
             value={config.framework}
@@ -73,6 +85,37 @@ export const ConfigPanel: React.FC = () => {
             <option>Tailwind CSS + shadcn/ui</option>
             <option>MUI</option>
             <option>Chakra UI</option>
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Database</label>
+          <select
+            value={config.database}
+            onChange={(e) => setConfig({ database: e.target.value })}
+            disabled={isRunning}
+            className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 disabled:opacity-50 appearance-none"
+          >
+            <option>Prisma + PostgreSQL</option>
+            <option>Drizzle + SQLite</option>
+            <option>Mongoose + MongoDB</option>
+            <option>None</option>
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Auth</label>
+          <select
+            value={config.auth}
+            onChange={(e) => setConfig({ auth: e.target.value })}
+            disabled={isRunning}
+            className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 disabled:opacity-50 appearance-none"
+          >
+            <option>NextAuth v5</option>
+            <option>Clerk</option>
+            <option>Auth0</option>
+            <option>Custom JWT</option>
+            <option>None</option>
           </select>
         </div>
 

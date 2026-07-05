@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BrainCircuit, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { BrainCircuit, Code2, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
 import { TimelineEvent } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
 
@@ -20,6 +20,7 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
   const getActorIcon = (actor: string) => {
     switch (actor) {
       case 'CONDUCTOR': return <BrainCircuit size={16} className="text-purple-400" />;
+      case 'CODER': return <Code2 size={16} className="text-cyan-400" />;
       case 'REVIEWER': return <ShieldCheck size={16} className="text-emerald-400" />;
       case 'RUNNER': return <TerminalSquare size={16} className="text-amber-400" />;
       default: return <Settings size={16} className="text-gray-400" />;
@@ -63,7 +64,7 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
 
                 return (
                   <motion.div
-                    key={index}
+                    key={log.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}

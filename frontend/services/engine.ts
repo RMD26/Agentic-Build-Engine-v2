@@ -131,7 +131,7 @@ export class ConductorEngine {
 
     const actorMap: Record<AgentRole, TimelineActor> = {
       CONDUCTOR: 'CONDUCTOR',
-      CODER: 'CONDUCTOR',
+      CODER: 'CODER',
       REVIEWER: 'REVIEWER',
       RUNNER: 'RUNNER',
       SYSTEM: 'SYSTEM'
