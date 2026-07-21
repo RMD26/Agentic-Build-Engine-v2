@@ -42,8 +42,19 @@ The variables set in `backend/.env.local` are:
 *   `GOOGLE_CLOUD_LOCATION`: The Google Cloud region associated with your project.
 *   `GOOGLE_CLOUD_PROJECT`: Your Google Cloud Project ID.
 
+The additional variables `API_BACKEND_HOST` and `PROXY_HEADER` are also read from
+this file; see `backend/.env.example` for the full list and descriptions.
+
 **Note:** These variables are automatically populated during the download process.
 You can modify the values in `backend/.env.local` if you need to change them.
+
+**Security:** `backend/.env.local` is git-ignored and must never be committed —
+it can contain secrets such as `PROXY_HEADER`. Use `backend/.env.example` as a
+template (`cp backend/.env.example backend/.env.local`) and generate a fresh
+`PROXY_HEADER` value (e.g. `openssl rand -hex 24`). If a value was ever
+committed, rotate it. Note that `PROXY_HEADER` is shipped to the browser by the
+frontend shim, so it is not a substitute for real authentication; keep the
+backend bound to `127.0.0.1`.
 
 ## Installation and Running the App
 
