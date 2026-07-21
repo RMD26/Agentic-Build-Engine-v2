@@ -96,25 +96,32 @@ export class ConductorEngine {
    * Executes protected write operations and code runs once human confirmation is received
    */
   private async runPostApprovalPipeline(): Promise<void> {
-    this.state.currentPhase = 'TESTING';
-    this.logTransition('CONDUCTOR', 'Human confirmation received. Executing safe workspace mutations.', 'TESTING');
+    try {
+      this.state.currentPhase = 'TESTING';
+      this.logTransition('CONDUCTOR', 'Human confirmation received. Executing safe workspace mutations.', 'TESTING');
 
-    // Fetch execution plan from the runner agent
-    const testRun = await this.runner.prepareTestExecution(this.context, this.state);
-    this.logTransition('RUNNER', `Running validation suite command: ${testRun.command} ${testRun.args.join(' ')}`, 'TESTING');
+      // Fetch execution plan from the runner agent
+      const testRun = await this.runner.prepareTestExecution(this.context, this.state);
+      this.logTransition('RUNNER', `Running validation suite command: ${testRun.command} ${testRun.args.join(' ')}`, 'TESTING');
 
-    // Simulate successful workspace script verification run
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate test duration
-    
-    this.state.executionResult = {
-      exitCode: 0,
-      stdout: 'PASS src/services/secureAuth.test.ts\n ✓ validateToken() enforces non-empty strings',
-      stderr: ''
-    };
+      // Simulate successful workspace script verification run
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate test duration
 
-    this.state.currentPhase = 'SUCCESS';
-    this.logTransition('CONDUCTOR', 'All multi-agent stages resolved perfectly. Task completed successfully.', 'SUCCESS');
-    this.broadcastState();
+      this.state.executionResult = {
+        exitCode: 0,
+        stdout: 'PASS src/services/secureAuth.test.ts\n ✓ validateToken() enforces non-empty strings',
+        stderr: ''
+      };
+
+      this.state.currentPhase = 'SUCCESS';
+      this.logTransition('CONDUCTOR', 'All multi-agent stages resolved perfectly. Task completed successfully.', 'SUCCESS');
+      this.broadcastState();
+    } catch (error: any) {
+      this.state.currentPhase = 'FAILURE';
+      this.state.errorMessage = error?.message || 'Unknown failure during post-approval execution.';
+      this.logTransition('CONDUCTOR', `Fatal exception caught while running post-approval pipeline: ${this.state.errorMessage}`, 'FAILURE');
+      this.broadcastState();
+    }
   }
 
   /**

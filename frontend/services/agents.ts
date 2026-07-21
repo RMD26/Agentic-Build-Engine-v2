@@ -35,8 +35,9 @@ export class CoderAgent {
         const raw = await ai.generate(CODER_SYSTEM_PROMPT, userPrompt);
         const mutations = extractJsonArray<WorkspaceMutation>(raw);
         if (mutations && mutations.length > 0) return mutations;
-      } catch {
-        // Fall through to simulation
+        console.warn('[CoderAgent] LLM response did not contain a usable mutation array; falling back to simulation.');
+      } catch (err) {
+        console.warn('[CoderAgent] Code generation via SynapseAI failed; falling back to simulation:', err);
       }
     }
 

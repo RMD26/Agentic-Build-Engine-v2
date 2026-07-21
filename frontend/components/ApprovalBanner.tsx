@@ -7,9 +7,16 @@ export const ApprovalBanner: React.FC = () => {
   const { pendingApproval, setPendingApproval, stopEngine, addLog } = useEngineStore();
 
   const handleApprove = async () => {
+    if (!pendingApproval) return;
     addLog('SYSTEM', 'Human approval granted. Resuming execution.', 'success', 'webview');
-    await pendingApproval!.resumeToken();
-    setPendingApproval(null);
+    try {
+      await pendingApproval.resumeToken();
+    } catch (err: any) {
+      addLog('SYSTEM', `Resuming execution failed: ${err?.message ?? 'Unknown error'}.`, 'error', 'webview');
+      stopEngine();
+    } finally {
+      setPendingApproval(null);
+    }
   };
 
   const handleReject = () => {
