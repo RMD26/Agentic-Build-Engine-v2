@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import type { TimelineActor, TimelineEvent, TimelineStatus } from './panelTypes';
+import { cn } from '../utils/cn';
 
 interface TimelinePanelVirtualizedProps {
   events: TimelineEvent[];
@@ -15,9 +16,6 @@ interface TimelinePanelVirtualizedProps {
   height?: number;
   overscan?: number;
 }
-
-const cn = (...classes: Array<string | false | null | undefined>) =>
-  classes.filter(Boolean).join(' ');
 
 const actorTone: Record<TimelineActor, string> = {
   CONDUCTOR: 'text-purple-400 border-purple-500/40 bg-purple-500/10',

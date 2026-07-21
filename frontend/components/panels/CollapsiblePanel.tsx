@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { cn } from '../../utils/cn';
 
 export interface CollapsiblePanelProps {
  title: string;
@@ -14,9 +15,6 @@ export interface CollapsiblePanelProps {
  contentClassName?: string;
  className?: string;
 }
-
-const cn = (...classes: Array<string | false | null | undefined>) =>
- classes.filter(Boolean).join(' ');
 
 const safeReadPersistedState = (key: string, fallback: boolean): boolean => {
  try {

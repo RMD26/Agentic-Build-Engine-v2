@@ -2,16 +2,14 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
-  BrainCircuit,
   CheckCircle2,
   AlertTriangle,
   Info,
   XCircle,
   FlaskConical,
-  Settings,
-  ShieldCheck,
-  TerminalSquare,
 } from 'lucide-react';
+import { cn } from '../utils/cn';
+import { getActorIcon } from '../utils/timeline';
 
 export interface TimelineEvent {
   id: string;
@@ -35,23 +33,11 @@ const OVERSCAN = 8;     // extra rows rendered above/below the viewport
 
 // ─── per-field style maps ──────────────────────────────────────────────────────
 
-const ACTOR_STYLES: Record<TimelineEvent['actor'], { icon: React.ReactNode; badge: string }> = {
-  CONDUCTOR: {
-    icon: <BrainCircuit size={14} className="text-purple-400" />,
-    badge: 'bg-purple-500/10 text-purple-300 border border-purple-500/20',
-  },
-  RUNNER: {
-    icon: <TerminalSquare size={14} className="text-amber-400" />,
-    badge: 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
-  },
-  REVIEWER: {
-    icon: <ShieldCheck size={14} className="text-emerald-400" />,
-    badge: 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20',
-  },
-  SYSTEM: {
-    icon: <Settings size={14} className="text-slate-400" />,
-    badge: 'bg-slate-500/10 text-slate-300 border border-slate-500/20',
-  },
+const ACTOR_BADGE: Record<TimelineEvent['actor'], string> = {
+  CONDUCTOR: 'bg-purple-500/10 text-purple-300 border border-purple-500/20',
+  RUNNER: 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
+  REVIEWER: 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20',
+  SYSTEM: 'bg-slate-500/10 text-slate-300 border border-slate-500/20',
 };
 
 const STATUS_STYLES: Record<TimelineEvent['status'], { icon: React.ReactNode; dot: string }> = {
@@ -88,7 +74,6 @@ interface RowProps {
 }
 
 const TimelineRow = React.memo<RowProps>(({ event, isActive, isLast, onClick, style }) => {
-  const actor = ACTOR_STYLES[event.actor];
   const status = STATUS_STYLES[event.status];
 
   return (
@@ -99,13 +84,11 @@ const TimelineRow = React.memo<RowProps>(({ event, isActive, isLast, onClick, st
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       aria-pressed={isActive}
-      className={[
+      className={cn(
         'absolute left-0 right-0 flex items-start gap-3 px-4 cursor-pointer select-none',
         'border-b border-slate-800/50 transition-colors duration-150',
-        isActive
-          ? 'bg-cyan-500/10'
-          : 'hover:bg-slate-800/40',
-      ].join(' ')}
+        isActive ? 'bg-cyan-500/10' : 'hover:bg-slate-800/40',
+      )}
     >
       {/* Timeline gutter: dot + line */}
       <div className="flex flex-col items-center pt-[22px] shrink-0 w-4">
@@ -126,12 +109,12 @@ const TimelineRow = React.memo<RowProps>(({ event, isActive, isLast, onClick, st
             {event.step}
           </span>
           <span
-            className={[
+            className={cn(
               'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] shrink-0',
-              actor.badge,
-            ].join(' ')}
+              ACTOR_BADGE[event.actor],
+            )}
           >
-            {actor.icon}
+            {getActorIcon(event.actor, 14)}
             {event.actor}
           </span>
           <span className="ml-auto shrink-0 flex items-center gap-1">
@@ -141,10 +124,10 @@ const TimelineRow = React.memo<RowProps>(({ event, isActive, isLast, onClick, st
 
         {/* Message */}
         <p
-          className={[
+          className={cn(
             'text-xs leading-snug truncate',
             isActive ? 'text-slate-100' : 'text-slate-400',
-          ].join(' ')}
+          )}
         >
           {event.message}
         </p>

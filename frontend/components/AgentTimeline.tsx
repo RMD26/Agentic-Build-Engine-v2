@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BrainCircuit, Code2, ShieldCheck, TerminalSquare, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { TimelineEvent } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
+import { getActorIcon, getStatusColorClass } from '../utils/timeline';
+import { formatLogTime } from '../utils/formatTime';
 
 interface AgentTimelineProps {
   logs: TimelineEvent[];
@@ -16,27 +18,6 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [logs]);
-
-  const getActorIcon = (actor: string) => {
-    switch (actor) {
-      case 'CONDUCTOR': return <BrainCircuit size={16} className="text-purple-400" />;
-      case 'CODER': return <Code2 size={16} className="text-cyan-400" />;
-      case 'REVIEWER': return <ShieldCheck size={16} className="text-emerald-400" />;
-      case 'RUNNER': return <TerminalSquare size={16} className="text-amber-400" />;
-      default: return <Settings size={16} className="text-gray-400" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'info': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'testing': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'success': return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case 'warning': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-      case 'error': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-    }
-  };
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background">
@@ -85,9 +66,9 @@ export const AgentTimeline: React.FC<AgentTimelineProps> = ({ logs }) => {
                     <div className="flex-1">
                       <CollapsiblePanel
                         title={log.actor}
-                        subtitle={log.timestamp.split('T')[1]?.slice(0, -1) ?? log.timestamp}
+                        subtitle={formatLogTime(log.timestamp)}
                         badgeText={log.step ?? log.status}
-                        badgeColorClass={getStatusColor(log.status)}
+                        badgeColorClass={getStatusColorClass(log.status)}
                         defaultExpanded={isLast || isFailure || isSuccess}
                       >
                         <p className={`text-sm leading-relaxed ${isFailure ? 'text-red-400' : 'text-slate-300'}`}>
