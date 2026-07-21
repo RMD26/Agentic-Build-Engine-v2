@@ -319,7 +319,11 @@ app.post('/api-proxy', async (req, res) => {
   } catch (error) {
     console.error(`[Node Proxy] Error proxying request for ${apiClient.name}`);
     console.error(error)
-    res.status(500).json({ error: error });
+    if (!res.headersSent) {
+      res.status(500).json({ error: error?.message || 'Internal proxy error' });
+    } else if (!res.writableEnded) {
+      res.end();
+    }
   }
 });
 
@@ -418,6 +422,7 @@ server.on('upgrade', async (request, socket, head) => {
           } catch (error) {
             console.error('[Node Proxy] Failed to parse message from client:', error);
             ws.close(1011, 'Failed to parse message');
+            return;
           }
 
           if (dataJson['setup']) {
