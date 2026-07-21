@@ -1,0 +1,3 @@
+coverage/
+.vite/
+node_modules/.vite/
