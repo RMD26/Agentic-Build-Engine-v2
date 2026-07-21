@@ -10,6 +10,16 @@
   const originalFetch = window.fetch;
   const originalWebSocket = window.WebSocket;
 
+  // Shared header identifying requests that originate from this shim. It must
+  // match the backend's PROXY_HEADER. Injected at build time from
+  // VITE_PROXY_HEADER so no secret is committed to source control.
+  // NOTE: this value is shipped to the browser and is therefore NOT a secret
+  // or a substitute for real authentication.
+  const PROXY_HEADER = import.meta.env.VITE_PROXY_HEADER;
+  if (!PROXY_HEADER) {
+    console.error('[Vertex AI Proxy Shim] Missing VITE_PROXY_HEADER. Set it in frontend/.env.local (must match the backend PROXY_HEADER).');
+  }
+
   // Function to validate VertexGenAi endpoints
   function isValidUrl(url) {
     try {
@@ -113,7 +123,7 @@
           headers: {
             'Content-Type': 'application/json',
             // Add a random header to identify these proxied requests on the Node.js backend.
-            'X-App-Proxy': 'KYcpAhHGTSJSbZUJUIJYyE369qTxlqN0',
+            'X-App-Proxy': PROXY_HEADER,
           },
           body: JSON.stringify(requestDetails),
         };
