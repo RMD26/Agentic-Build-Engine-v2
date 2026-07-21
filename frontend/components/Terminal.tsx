@@ -1,21 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Terminal as TerminalIcon, Trash2, Server, Box, LayoutPanelLeft } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useEngineStore } from '../store';
 import { LogEntry, LogSource } from '../types';
+import { formatLogTime } from '../utils/formatTime';
+import { DEFAULT_LOG_TYPE_META, LOG_SOURCE_TABS, LOG_TYPE_META } from '../utils/logs';
 
 const LogLine: React.FC<{ log: LogEntry }> = ({ log }) => {
-  const time = new Date(log.timestamp).toISOString().split('T')[1].slice(0, -1);
-  
-  let colorClass = 'text-muted-foreground';
-  let prefix = '>';
-  
-  switch (log.type) {
-    case 'info': colorClass = 'text-blue-400'; prefix = 'i'; break;
-    case 'success': colorClass = 'text-emerald-400'; prefix = '✓'; break;
-    case 'warning': colorClass = 'text-amber-400'; prefix = '⚠'; break;
-    case 'error': colorClass = 'text-red-400'; prefix = '✖'; break;
-    case 'system': colorClass = 'text-purple-400'; prefix = '⚙'; break;
-  }
+  const time = formatLogTime(log.timestamp);
+  const { colorClass, prefix } = LOG_TYPE_META[log.type] ?? DEFAULT_LOG_TYPE_META;
 
   return (
     <div className="flex items-start gap-3 hover:bg-muted/50 px-2 py-0.5 rounded-sm transition-colors">
@@ -42,29 +34,22 @@ export const Terminal: React.FC = () => {
     }
   }, [filteredLogs]);
 
-  const tabs = [
-    { id: 'all', label: 'All Logs', icon: TerminalIcon },
-    { id: 'orchestrator', label: 'MAS Orchestrator', icon: Server },
-    { id: 'extension-host', label: 'Extension Host', icon: LayoutPanelLeft },
-    { id: 'runner-sandbox', label: 'Runner Sandbox', icon: Box },
-  ] as const;
-
   return (
     <div className="h-64 border-t border-border bg-[#050505] flex flex-col shrink-0 font-mono text-[11px] sm:text-xs">
       <div className="flex items-center justify-between px-2 border-b border-border bg-card/50">
         <div className="flex items-center gap-1">
-          {tabs.map(tab => (
+          {LOG_SOURCE_TABS.map(({ id, label, Icon }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              key={id}
+              onClick={() => setActiveTab(id as LogSource | 'all')}
               className={`flex items-center gap-2 px-3 py-2 text-xs font-sans font-medium border-b-2 transition-colors ${
-                activeTab === tab.id 
+                activeTab === id 
                   ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
               }`}
             >
-              <tab.icon size={14} />
-              {tab.label}
+              <Icon size={14} />
+              {label}
             </button>
           ))}
         </div>
