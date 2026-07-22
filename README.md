@@ -48,12 +48,15 @@ this file; see `backend/.env.example` for the full list and descriptions.
 **Note:** These variables are automatically populated during the download process.
 You can modify the values in `backend/.env.local` if you need to change them.
 
-**Security:** `backend/.env.local` is git-ignored and must never be committed —
-it can contain secrets such as `PROXY_HEADER`. Use `backend/.env.example` as a
-template (`cp backend/.env.example backend/.env.local`) and generate a fresh
-`PROXY_HEADER` value (e.g. `openssl rand -hex 24`). If a value was ever
-committed, rotate it. Note that `PROXY_HEADER` is shipped to the browser by the
-frontend shim, so it is not a substitute for real authentication; keep the
+**Security:** `backend/.env.local` and `frontend/.env.local` are git-ignored and
+must never be committed. Use the `.env.example` files as templates:
+`cp backend/.env.example backend/.env.local` and
+`cp frontend/.env.example frontend/.env.local`. Generate a fresh `PROXY_HEADER`
+value (e.g. `openssl rand -hex 24`) and set the **same** value as
+`VITE_PROXY_HEADER` in `frontend/.env.local` — the frontend shim sends it as the
+`X-App-Proxy` header and the backend rejects requests that don't match. If a
+value was ever committed, rotate it. Note that this header is inlined into the
+browser bundle, so it is not a substitute for real authentication; keep the
 backend bound to `127.0.0.1`.
 
 ## Installation and Running the App
