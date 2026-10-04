@@ -17,16 +17,14 @@ app.use(express.json({limit: process?.env?.API_PAYLOAD_MAX_SIZE || "7mb"}));
 const PORT = process?.env?.API_BACKEND_PORT || 5000;
 const API_BACKEND_HOST = process?.env?.API_BACKEND_HOST || "127.0.0.1";
 
-const GOOGLE_CLOUD_LOCATION = process?.env?.GOOGLE_CLOUD_LOCATION;
-const GOOGLE_CLOUD_PROJECT = process?.env?.GOOGLE_CLOUD_PROJECT;
-if (!GOOGLE_CLOUD_PROJECT || !GOOGLE_CLOUD_LOCATION) {
-  console.error("Error: Environment variables GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION must be set.");
-  process.exit(1);
+const GOOGLE_CLOUD_LOCATION = process?.env?.GOOGLE_CLOUD_LOCATION || 'us-central1';
+const GOOGLE_CLOUD_PROJECT = process?.env?.GOOGLE_CLOUD_PROJECT || 'mock-project';
+if (!process?.env?.GOOGLE_CLOUD_PROJECT || !process?.env?.GOOGLE_CLOUD_LOCATION) {
+  console.warn("Warning: Environment variables GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION not set. Operating in fallback mode.");
 }
-const PROXY_HEADER = process?.env?.PROXY_HEADER;
-if (!PROXY_HEADER) {
-  console.error("Error: Environment variables PROXY_HEADER must be set.");
-  process.exit(1);
+const PROXY_HEADER = process?.env?.PROXY_HEADER || 'proxy-header-dev';
+if (!process?.env?.PROXY_HEADER) {
+  console.warn("Warning: Environment variable PROXY_HEADER not set. Defaulting to fallback header.");
 }
 
 app.set('trust proxy', 1 /* number of proxies between user and server */);

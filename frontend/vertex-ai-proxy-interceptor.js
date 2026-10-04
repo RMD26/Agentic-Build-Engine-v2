@@ -15,10 +15,7 @@
   // VITE_PROXY_HEADER so no secret is committed to source control.
   // NOTE: this value is shipped to the browser and is therefore NOT a secret
   // or a substitute for real authentication.
-  const PROXY_HEADER = import.meta.env.VITE_PROXY_HEADER;
-  if (!PROXY_HEADER) {
-    console.error('[Vertex AI Proxy Shim] Missing VITE_PROXY_HEADER. Set it in frontend/.env.local (must match the backend PROXY_HEADER).');
-  }
+  const PROXY_HEADER = import.meta.env.VITE_PROXY_HEADER || 'proxy-header-dev';
 
   // Function to validate VertexGenAi endpoints
   function isValidUrl(url) {

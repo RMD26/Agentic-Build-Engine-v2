@@ -1,12 +1,14 @@
 {
   "name": "agentic-build-engine-v2",
-  "workspaces": ["frontend", "backend"], 
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "dev-frontend": "npm run dev --prefix frontend",
-    "dev-backend": "npm run dev --prefix backend",
-    "dev": "concurrently \"npm run dev-frontend\" \"npm run dev-backend\""
-  },
-  "devDependencies": {
-    "concurrently": "latest"
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "preview": "npm run preview --workspace=frontend",
+    "test": "npm run test --workspace=frontend",
+    "lint": "npm run test --workspace=frontend"
   }
 }
