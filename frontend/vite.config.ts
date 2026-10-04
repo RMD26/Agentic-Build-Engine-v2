@@ -18,11 +18,55 @@ export default defineConfig(({ mode }) => {
           '/ws-proxy': {target: 'ws://localhost:5000', ws: true},
         },
       },
+      preview: {
+        host: '0.0.0.0',
+        port: 3000,
+        allowedHosts: true,
+      },
       plugins: [
         react(),
         {
           name: 'api-proxy-mock',
           configureServer(server) {
+            server.middlewares.use((req, res, next) => {
+              if (req.url && req.url.startsWith('/api-proxy') && req.method === 'POST') {
+                let body = '';
+                req.on('data', (chunk) => {
+                  body += chunk;
+                });
+                req.on('end', () => {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(
+                    JSON.stringify({
+                      candidates: [
+                        {
+                          content: {
+                            role: 'model',
+                            parts: [
+                              {
+                                text: JSON.stringify([
+                                  {
+                                    type: 'CREATE_FILE',
+                                    filePath: 'src/services/secureAuth.ts',
+                                    content:
+                                      '// Context-Aware Persona injected code\nexport const validateToken = (token: string): boolean => {\n  if (!token) return false;\n  // Avoid insecure defaults\n  return token.startsWith("secure_hdr_");\n};'
+                                  }
+                                ])
+                              }
+                            ]
+                          },
+                          finishReason: 'STOP'
+                        }
+                      ]
+                    })
+                  );
+                });
+                return;
+              }
+              next();
+            });
+          },
+          configurePreviewServer(server) {
             server.middlewares.use((req, res, next) => {
               if (req.url && req.url.startsWith('/api-proxy') && req.method === 'POST') {
                 let body = '';
